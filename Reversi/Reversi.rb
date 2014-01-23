@@ -12,10 +12,10 @@ module Reversi
   class Board
     attr_accessor :cells
 
-    def initialize()
+    def initialize(width = WIDTH, height = HEIGHT)
       @cells = {}
-      0.upto(HEIGHT-1) do |y|
-        0.upto(WIDTH-1) do |x|
+      0.upto(height-1) do |y|
+        0.upto(width-1) do |x|
           cells[[x, y]] = EMPTY_CELL
         end
       end
@@ -51,7 +51,7 @@ module Reversi
     end
   end
 
-  class Player < Struct.new(:board, :tile, :score)
+  class Player < Struct.new(:board, :tile)
     def is_valid_move?(cell)
       tiles_to_flip = []
 
@@ -82,8 +82,47 @@ module Reversi
       tiles_to_flip.length > 0 ? tiles_to_flip : false
     end
 
+    def tiles_to_flip(cell)
+      is_valid_move? cell
+    end
+
     def valid_moves
       board.positions.select { |position| is_valid_move? position }
     end
+
+    def score
+      board.positions.count { |cell| board[*cell] == tile } 
+    end
+
+  end
+
+  class Human < Player
+    def make_move(cell)
+      tiles_to_flip(cell).each { |move| board[*move] = tile } if valid_moves.include? cell
+    end
+  end
+
+  class Computer < Player
+    def make_move()
+      possible_moves = valid_moves
+      index = Random.rand(possible_moves.length)
+      tiles_to_flip(possible_moves[index]).each { |move| board[*move] = tile }
+    end
+  end
+
+  class Game
+
+    attr_accessor :board, :player_one, :player_two
+    
+    def initialize()
+      @board = Board.new
+      @player_one = Human.new @board, BLACK_CELL
+      @player_two = Computer.new @board, WHITE_CELL
+    end
   end
 end
+
+class Console_GUI
+end
+
+
