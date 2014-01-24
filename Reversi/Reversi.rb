@@ -114,7 +114,7 @@ module Reversi
 
     attr_accessor :board, :player_one, :player_two
     
-    def initialize()
+    def initialize(width, height)
       @board = Board.new
       @player_one = Human.new @board, BLACK_CELL
       @player_two = Computer.new @board, WHITE_CELL
@@ -123,6 +123,41 @@ module Reversi
 end
 
 class Console_GUI
+  POSITION = "| %s ".freeze
+  ROW = "----".freeze
+  CELLS = {1 => "@".freeze, 2 => "O", 0 => " "}
+
+  attr_accessor :boardGUI, :game, :tiles
+
+  def initialize(width = 8, height = 8)
+    @game = Reversi::Game.new width, height
+    @boardGUI = ""
+    @tiles = []
+    @game.board.positions.each { |position| @tiles << CELLS[game.board[*position]] }
+  end
+
+  def put
+    tile
+    puts boardGUI % @tiles
+  end
+
+  def tile
+    @tiles = []
+    @game.board.positions.each { |position| @tiles << CELLS[game.board[*position]] }
+  end
+
+  def boardGUI
+    @boardGUI = "  " + 1.upto(8).map(&:to_s).join("   ") + "\n" + (ROW*8 + "-\n" + POSITION*8 + "|\n")*8 + ROW*8 + "-\n"
+  end
 end
 
 
+game = Console_GUI.new
+game.put
+puts "\n"
+game.game.player_one.make_move [5, 4]
+game.put
+
+puts "\n"
+game.game.player_two.make_move
+game.put
