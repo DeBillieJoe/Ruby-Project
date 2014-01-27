@@ -103,21 +103,44 @@ module Reversi
   end
 
   class Computer < Player
-    def make_move()
+    def make_move(cell=nil)
       possible_moves = valid_moves
       index = Random.rand(possible_moves.length)
       tiles_to_flip(possible_moves[index]).each { |move| board[*move] = tile }
     end
   end
+end
 
-  class Game
-
-    attr_accessor :board, :player_one, :player_two
+class Game
+  attr_accessor :board, :player_one, :player_two, :gui
     
-    def initialize(width, height)
-      @board = Board.new
-      @player_one = Human.new @board, BLACK_CELL
-      @player_two = Computer.new @board, WHITE_CELL
+  def initialize(width = 8, height = 8)
+    @board = Reversi::Board.new
+    @player_one = Reversi::Human.new @board, Reversi::BLACK_CELL
+    @player_two = Reversi::Computer.new @board, Reversi::WHITE_CELL
+    @gui = Console_GUI.new
+    @turn = Reversi::BLACK_CELL
+  end
+
+  def run_game
+    player, other_player = nil, nil
+
+    while true
+      gui.tiles board
+      gui.put
+      player, other_player = player_one.tile == @turn ? [player_one, player_two] : [player_two, player_one]
+
+      break if player.valid_moves.empty?
+
+      if player.is_a? Reversi::Human
+        gui.player_move player
+      else
+        gui.computer_move player
+      end
+
+      if not other_player.valid_moves.empty?
+        @turn = other_player.tile
+      end
     end
   end
 end
@@ -125,39 +148,53 @@ end
 class Console_GUI
   POSITION = "| %s ".freeze
   ROW = "----".freeze
-  CELLS = {1 => "@".freeze, 2 => "O", 0 => " "}
+  EDGE = "  " + ROW*8 + "-\n".freeze
+  ROW_NUMBER = "%d ".freeze
+  CELLS = {1 => "@".freeze, 2 => "O".freeze, 0 => " ".freeze}
 
-  attr_accessor :boardGUI, :game, :tiles
+  attr_accessor :boardGUI, :tiles
 
-  def initialize(width = 8, height = 8)
-    @game = Reversi::Game.new width, height
+  def initialize
     @boardGUI = ""
     @tiles = []
-    @game.board.positions.each { |position| @tiles << CELLS[game.board[*position]] }
   end
 
   def put
-    tile
     puts boardGUI % @tiles
   end
 
-  def tile
+  def tiles(board)
     @tiles = []
-    @game.board.positions.each { |position| @tiles << CELLS[game.board[*position]] }
+    board.positions.each { |position| @tiles << CELLS[board[*position]] }
   end
 
   def boardGUI
-    @boardGUI = "  " + 1.upto(8).map(&:to_s).join("   ") + "\n" + (ROW*8 + "-\n" + POSITION*8 + "|\n")*8 + ROW*8 + "-\n"
+    @boardGUI = "    " + 1.upto(8).map(&:to_s).join("   ") + "\n" 
+    (1..8).each do |i|
+      @boardGUI += EDGE + ROW_NUMBER % i.to_s + POSITION*8 + "|\n"
+    end
+    @boardGUI += EDGE
+  end
+
+  def player_move(player)
+    move = nil
+    until move
+      move = gets.split(",").map(&:to_i)
+      move.map! { |position| position - 1 }
+      if not move.nil? and not player.is_valid_move? move
+        move = nil
+      end
+    end
+    player.make_move move
+  end
+
+  def computer_move(computer)
+    puts "Computer is thinking..."
+    sleep(5)
+    computer.make_move
   end
 end
 
 
-game = Console_GUI.new
-game.put
-puts "\n"
-game.game.player_one.make_move [5, 4]
-game.put
-
-puts "\n"
-game.game.player_two.make_move
-game.put
+game = Game.new
+game.run_game
