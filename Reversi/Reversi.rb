@@ -117,7 +117,7 @@ class Game
   def initialize(width = 8, height = 8)
     @board = Reversi::Board.new
     @player_one = Reversi::Human.new @board, Reversi::BLACK_CELL
-    @player_two = Reversi::Computer.new @board, Reversi::WHITE_CELL
+    @player_two = Reversi::Human.new @board, Reversi::WHITE_CELL
     @gui = Console_GUI.new
     @turn = Reversi::BLACK_CELL
   end
@@ -127,7 +127,7 @@ class Game
 
     while true
       gui.tiles board
-      gui.put
+      puts gui
       player, other_player = player_one.tile == @turn ? [player_one, player_two] : [player_two, player_one]
 
       break if player.valid_moves.empty?
@@ -141,6 +141,8 @@ class Game
       if not other_player.valid_moves.empty?
         @turn = other_player.tile
       end
+
+      puts gui.score player_one, player_two
     end
   end
 end
@@ -150,7 +152,7 @@ class Console_GUI
   ROW = "----".freeze
   EDGE = "  " + ROW*8 + "-\n".freeze
   ROW_NUMBER = "%d ".freeze
-  CELLS = {1 => "@".freeze, 2 => "O".freeze, 0 => " ".freeze}
+  CELLS = {1 => "B".freeze, 2 => "W".freeze, 0 => " ".freeze}
 
   attr_accessor :boardGUI, :tiles
 
@@ -159,8 +161,12 @@ class Console_GUI
     @tiles = []
   end
 
-  def put
-    puts boardGUI % @tiles
+  def score(player_one, player_two)
+    "Player 1: %s\nPlayer 2: %s\n" % [player_one.score, player_two.score]
+  end
+
+  def to_s
+    boardGUI % @tiles
   end
 
   def tiles(board)
@@ -179,18 +185,22 @@ class Console_GUI
   def player_move(player)
     move = nil
     until move
-      move = gets.split(",").map(&:to_i)
+      puts "Make your move! It should be two digits separated by space\n"
+      move = gets.split(" ").map(&:to_i)
       move.map! { |position| position - 1 }
       if not move.nil? and not player.is_valid_move? move
+        puts "Invalid move!\n"
         move = nil
       end
     end
+    tiles player.board
     player.make_move move
   end
 
   def computer_move(computer)
-    puts "Computer is thinking..."
-    sleep(5)
+    puts "Computer is thinking...\n"
+    sleep(2)
+    tiles computer.board
     computer.make_move
   end
 end
