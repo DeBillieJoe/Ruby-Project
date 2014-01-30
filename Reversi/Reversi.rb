@@ -142,7 +142,7 @@ class Game
         @turn = other_player.tile
       end
 
-      puts gui.score player_one, player_two
+      puts gui.score player_one.score, player_two.score
     end
   end
 end
@@ -162,7 +162,7 @@ class Console_GUI
   end
 
   def score(player_one, player_two)
-    "Player 1: %s\nPlayer 2: %s\n" % [player_one.score, player_two.score]
+    "Player 1: %s\nPlayer 2: %s\n" % [player_one, player_two]
   end
 
   def to_s
