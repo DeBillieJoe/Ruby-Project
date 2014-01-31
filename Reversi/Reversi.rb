@@ -126,24 +126,38 @@ class Game
     player, other_player = nil, nil
 
     while true
-      gui.tiles board
+      gui.tiles board.cells.values
       puts gui
       player, other_player = player_one.tile == @turn ? [player_one, player_two] : [player_two, player_one]
 
       break if player.valid_moves.empty?
 
-      if player.is_a? Reversi::Human
-        gui.player_move player
-      else
-        gui.computer_move player
-      end
+      player.is_a?(Reversi::Human) ? player_move(player) : computer_move(player)
 
       if not other_player.valid_moves.empty?
         @turn = other_player.tile
       end
 
-      puts gui.score player_one.score, player_two.score
+      gui.score player_one.score, player_two.score
     end
+  end
+
+  def player_move(player)
+    move = gui.player_input
+   
+    move.map! { |position| position - 1 }
+    if not move.nil? and not player.is_valid_move? move
+      gui.invalid_move
+      move = nil
+    end
+    
+    gui.tiles player.board.cells.values
+    player.make_move move
+  end
+
+  def computer_move(computer)
+    gui.tiles computer.board.cells.values
+    computer.make_move
   end
 end
 
@@ -162,16 +176,20 @@ class Console_GUI
   end
 
   def score(player_one, player_two)
-    "Player 1: %s\nPlayer 2: %s\n" % [player_one, player_two]
+    puts "Player 1: %s\nPlayer 2: %s\n" % [player_one, player_two]
   end
 
   def to_s
     boardGUI % @tiles
   end
 
-  def tiles(board)
+  def invalid_move
+    puts "\n-------------\nInvalid move!\n-------------\n\n"
+  end
+
+  def tiles(values)
     @tiles = []
-    board.positions.each { |position| @tiles << CELLS[board[*position]] }
+    values.each { |value| @tiles << CELLS[value] }
   end
 
   def boardGUI
@@ -182,26 +200,13 @@ class Console_GUI
     @boardGUI += EDGE
   end
 
-  def player_move(player)
-    move = nil
-    until move
-      puts "Make your move! It should be two digits separated by space\n"
-      move = gets.split(" ").map(&:to_i)
-      move.map! { |position| position - 1 }
-      if not move.nil? and not player.is_valid_move? move
-        puts "Invalid move!\n"
-        move = nil
-      end
+  def player_input
+    puts "Make your move! It should be two digits separated by space\n"
+    input = nil
+    until input
+      input = /^[1-8] [1-8](\n)$/.match gets
     end
-    tiles player.board
-    player.make_move move
-  end
-
-  def computer_move(computer)
-    puts "Computer is thinking...\n"
-    sleep(2)
-    tiles computer.board
-    computer.make_move
+    input.to_s.split(' ').map(&:to_i)
   end
 end
 
