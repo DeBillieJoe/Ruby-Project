@@ -107,7 +107,7 @@ module Reversi
   end
 
   class Computer < Player
-    def make_move(cell=nil)
+    def easy(cell=nil)
       possible_moves = valid_moves
       index = Random.rand(possible_moves.length)
       tiles_to_flip(possible_moves[index]).each { |move| board[*move] = tile }
@@ -121,13 +121,14 @@ class Game
   def initialize(width = 8, height = 8)
     @board = Reversi::Board.new
     @player_one = Reversi::Human.new @board, Reversi::BLACK_CELL
-    @player_two = Reversi::Human.new @board, Reversi::WHITE_CELL
+    @player_two = Reversi::Computer.new @board, Reversi::WHITE_CELL
     @gui = Console_GUI.new
     @turn = Reversi::BLACK_CELL
   end
 
   def run_game
     player, other_player = nil, nil
+    difficulty = gui.difficulty if player_two.is_a? Reversi::Computer
 
     while true
       gui.tiles board.cells.values
@@ -139,7 +140,7 @@ class Game
       break if player.valid_moves.empty?
 
       gui.turn player.tile
-      player.is_a?(Reversi::Human) ? player_move(player) : computer_move(player)
+      player.is_a?(Reversi::Human) ? player_move(player) : computer_move(player, difficulty)
 
       if not other_player.valid_moves.empty?
         @turn = other_player.tile
@@ -164,9 +165,9 @@ class Game
     player.make_move move
   end
 
-  def computer_move(computer)
+  def computer_move(computer, difficulty)
     gui.tiles computer.board.values
-    computer.make_move
+    computer.send difficulty
   end
 end
 
@@ -177,6 +178,7 @@ class Console_GUI
   ROW_NUMBER = "%d ".freeze
   CELLS = {1 => "B".freeze, 2 => "W".freeze, 0 => " ".freeze}
   TURN = {1 => "\nPlayer one's turn\n".freeze, 2 => "\nPlayer two's turn\n".freeze}
+  DIFFICULTIES = ["easy", "medium", "hard"]
 
   attr_accessor :boardGUI, :tiles
 
@@ -214,7 +216,7 @@ class Console_GUI
     puts "\nMake your move! It should be two digits separated by space\n"
     input = nil
     until input
-      input = /^[1-8] [1-8](\n)$/.match gets
+      input = /^[1-8] [1-8]$/.match gets.chomp
       invalid_move if input.nil?
     end
     input.to_s.split(' ').map(&:to_i)
@@ -222,6 +224,16 @@ class Console_GUI
 
   def turn(tile)
     puts TURN[tile]
+  end
+
+  def difficulty
+    puts "\nChoose computer's difficulty: easy, medium or hard\n"
+    difficulty = nil
+    until difficulty
+      difficulty = gets.chomp
+      difficulty = nil unless DIFFICULTIES.include?(difficulty)
+    end
+    difficulty
   end
 end
 
