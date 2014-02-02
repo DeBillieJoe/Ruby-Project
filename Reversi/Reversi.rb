@@ -37,7 +37,7 @@ module Reversi
     def []=(x, y, value)
       @cells[[x, y]] = value
     end
-    
+
     def is_move_on_board?(x, y)
       @cells.has_key? [x, y]
     end
@@ -48,6 +48,10 @@ module Reversi
 
     def positions
       @cells.keys
+    end
+
+    def values
+      @cells.values
     end
   end
 
@@ -91,7 +95,7 @@ module Reversi
     end
 
     def score
-      board.positions.count { |cell| board[*cell] == tile } 
+      board.positions.count { |cell| board[*cell] == tile }
     end
 
   end
@@ -113,7 +117,7 @@ end
 
 class Game
   attr_accessor :board, :player_one, :player_two, :gui
-    
+
   def initialize(width = 8, height = 8)
     @board = Reversi::Board.new
     @player_one = Reversi::Human.new @board, Reversi::BLACK_CELL
@@ -128,35 +132,40 @@ class Game
     while true
       gui.tiles board.cells.values
       puts gui
+      gui.score player_one.score, player_two.score
+
       player, other_player = player_one.tile == @turn ? [player_one, player_two] : [player_two, player_one]
 
       break if player.valid_moves.empty?
 
+      gui.turn player.tile
       player.is_a?(Reversi::Human) ? player_move(player) : computer_move(player)
 
       if not other_player.valid_moves.empty?
         @turn = other_player.tile
       end
-
-      gui.score player_one.score, player_two.score
     end
   end
 
   def player_move(player)
-    move = gui.player_input
-   
-    move.map! { |position| position - 1 }
-    if not move.nil? and not player.is_valid_move? move
-      gui.invalid_move
-      move = nil
+    move = nil
+
+    until move
+      move = gui.player_input
+
+      move.map! { |position| position - 1 }
+      if not move.nil? and not player.is_valid_move? move
+        gui.invalid_move
+        move = nil
+      end
     end
-    
+
     gui.tiles player.board.cells.values
     player.make_move move
   end
 
   def computer_move(computer)
-    gui.tiles computer.board.cells.values
+    gui.tiles computer.board.values
     computer.make_move
   end
 end
@@ -167,6 +176,7 @@ class Console_GUI
   EDGE = "  " + ROW*8 + "-\n".freeze
   ROW_NUMBER = "%d ".freeze
   CELLS = {1 => "B".freeze, 2 => "W".freeze, 0 => " ".freeze}
+  TURN = {1 => "\nPlayer one's turn\n".freeze, 2 => "\nPlayer two's turn\n".freeze}
 
   attr_accessor :boardGUI, :tiles
 
@@ -176,15 +186,15 @@ class Console_GUI
   end
 
   def score(player_one, player_two)
-    puts "Player 1: %s\nPlayer 2: %s\n" % [player_one, player_two]
+    puts "\nPlayer 1: %s   Player 2: %s\n" % [player_one, player_two]
   end
 
   def to_s
-    boardGUI % @tiles
+    "\n" + boardGUI % @tiles + "\n"
   end
 
   def invalid_move
-    puts "\n-------------\nInvalid move!\n-------------\n\n"
+    puts "\n\n-------------\nInvalid move!\n-------------\n\n"
   end
 
   def tiles(values)
@@ -193,7 +203,7 @@ class Console_GUI
   end
 
   def boardGUI
-    @boardGUI = "    " + 1.upto(8).map(&:to_s).join("   ") + "\n" 
+    @boardGUI = "    " + 1.upto(8).map(&:to_s).join("   ") + "\n"
     (1..8).each do |i|
       @boardGUI += EDGE + ROW_NUMBER % i.to_s + POSITION*8 + "|\n"
     end
@@ -201,12 +211,17 @@ class Console_GUI
   end
 
   def player_input
-    puts "Make your move! It should be two digits separated by space\n"
+    puts "\nMake your move! It should be two digits separated by space\n"
     input = nil
     until input
       input = /^[1-8] [1-8](\n)$/.match gets
+      invalid_move if input.nil?
     end
     input.to_s.split(' ').map(&:to_i)
+  end
+
+  def turn(tile)
+    puts TURN[tile]
   end
 end
 
