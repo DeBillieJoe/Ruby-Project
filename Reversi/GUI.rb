@@ -36,11 +36,59 @@ def draw_tiles(board)
   end
 end
 
-Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
-  TILECOLORS = {1 => :black, 2 => :white}
 
+
+def clicked_square_coordinates(left, top)
+  (0..HEIGHT.pred).each do |y|
+    (0..WIDTH.pred).each do |x|
+      return [x, y] if top > x*SPACE+X_OFFSET and top < (x+1)*SPACE + X_OFFSET and left > y*SPACE + Y_OFFSET and left < (y+1)*SPACE+Y_OFFSET
+    end
+  end
+  nil
+end
+
+def is_click_in_square?(left, top, x, y)
+  horizontal = left.beetween? x*SPACE+X_OFFSET, (x+1)*SPACE+X_OFFSET
+  vertical = top.between? y*SPACE+Y_OFFSET, (y+1)*SPACE+Y_OFFSET
+  horizontal and vertical
+end
+
+def clicked(board)
+  click do |button, top, left|
+    coords = clicked_square_coordinates left, top
+    board[*coords] = 1
+  end
+end
+def player_move(coordinates)
+  player.make_move(coordinates) ? true : false
+end
+
+Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
+  TILECOLORS = {1 => black, 2 => white}
+  TURNS = {1 => 2, 2=> 1}
+  @move = para
   background red
   board = Board.new
+  players = [Human.new(board, 1), Human.new(board, 2)]
+  # player_one = Human.new board, 1
+  # player_two = Human.new board, 2
   draw_board
   draw_tiles board
+  turn = 1
+  @move.replace "#{turn}"
+  click do |button, top, left|
+    if button == 1
+      coords = clicked_square_coordinates left, top
+
+      player_to_make_move = players.select { |player| player.tile == turn }.first
+      other_player = players.select { |player| player_to_make_move != player}.first
+      move = player_to_make_move.make_move coords
+      if move
+        turn = TURNS[turn] unless other_player.valid_moves.empty?
+        @move.replace "#{turn}"
+        draw_board
+        draw_tiles board
+      end
+    end
+  end
 end
