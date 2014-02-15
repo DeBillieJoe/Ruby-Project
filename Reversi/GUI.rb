@@ -1,5 +1,5 @@
 require 'green_shoes'
-require './Reversi.rb'
+require './reversi.rb'
 include Reversi
 
 WINDOWWIDTH = 640
