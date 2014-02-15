@@ -54,6 +54,9 @@ class Game
 
   def computer_move(computer, difficulty)
     gui.tiles computer.board.values
-    computer.send difficulty
+    computer.make_move difficulty
   end
 end
+
+game = Game.new
+game.run_game
