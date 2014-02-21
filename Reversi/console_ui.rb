@@ -4,7 +4,10 @@ class ConsoleUi
   EDGE = "  " + ROW*8 + "-\n".freeze
   ROW_NUMBER = "%d ".freeze
   CELLS = {1 => "B".freeze, 2 => "W".freeze, 0 => " ".freeze}
-  TURN = {1 => "\nPlayer one's turn\n".freeze, 2 => "\nPlayer two's turn\n".freeze}
+  TURN = {
+          1 => "\nPlayer one's turn\n".freeze,
+          2 => "\nPlayer two's turn\n".freeze
+         }
   DIFFICULTIES = ["easy", "medium", "hard"]
 
   attr_accessor :boardGUI, :tiles
