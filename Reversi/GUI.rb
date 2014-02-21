@@ -25,7 +25,7 @@ def draw_board
 end
 
 def get_center_pixels(x, y)
-  [(X_OFFSET + x*SPACE)+5, (Y_OFFSET + y*SPACE)+5]
+  [(X_OFFSET + x*SPACE) + 5, (Y_OFFSET + y*SPACE) + 5]
 end
 
 def draw_tiles(board)
@@ -33,7 +33,7 @@ def draw_tiles(board)
     (0..WIDTH.pred).each do |x|
       if board[x, y] != 0
         fill TILECOLORS[board[x, y]]
-        oval *get_center_pixels(x, y), (SPACE/2)-5
+        oval *get_center_pixels(x, y), (SPACE/2) - 5
       end
     end
   end
@@ -42,8 +42,8 @@ end
 def clicked_square_coordinates(left, top)
   (0..HEIGHT.pred).each do |y|
     (0..WIDTH.pred).each do |x|
-      horizontal = top.between?(x*SPACE+X_OFFSET, (x+1)*SPACE+X_OFFSET)
-      vertical = left.between?(y*SPACE+Y_OFFSET, (y+1)*SPACE+Y_OFFSET)
+      horizontal = top.between?(x*SPACE + X_OFFSET, (x+1) * SPACE + X_OFFSET)
+      vertical = left.between?(y*SPACE + Y_OFFSET, (y+1) * SPACE + Y_OFFSET)
       return [x, y] if horizontal and vertical
     end
   end
@@ -51,8 +51,8 @@ def clicked_square_coordinates(left, top)
 end
 
 def is_click_in_square?(left, top, x, y)
-  horizontal = left.beetween? x*SPACE+X_OFFSET, (x+1)*SPACE+X_OFFSET
-  vertical = top.between? y*SPACE+Y_OFFSET, (y+1)*SPACE+Y_OFFSET
+  horizontal = left.beetween? x*SPACE + X_OFFSET, (x+1) * SPACE + X_OFFSET
+  vertical = top.between? y*SPACE + Y_OFFSET, (y+1) * SPACE + Y_OFFSET
   horizontal and vertical
 end
 
@@ -68,39 +68,67 @@ def player_move(coordinates)
 end
 
 def score_and_turn(players, turn)
+  turn_message = {BLACK_TILE => "black", WHITE_TILE => "white"}
   @score.replace "Player one #{players[0].score}, Player two #{players[1].score}"
-  @turn.replace "Turn: #{turn}"
+  @turn.replace "Turn: #{turn_message[turn]}"
 end
 
-def check_for_winner(board, players)
-  board.positions.all? { |x, y| not board.empty? x, y }
+def check_for_winner?(board, players)
+  if board.full? or players.all? { |player| player.valid_moves.empty? }
+    @winner.replace "#{WINNER_MESSAGE}"
+
+  end
 end
 
+def start_setup
+  board = Board.new
+  players = [Human.new(board, BLACK_TILE), Human.new(board, WHITE_TILE)]
+  [board, players]
+end
 
+def rage_quit
+  keypress do |k|
+    fill red
+    rect 0, 0, WINDOWWIDTH, WINDOWHEIGHT
+    para "!!!RAGE QUIT!!!", align: 'center'
+  end
+end
 
 Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
   TILECOLORS = {BLACK_TILE => black, WHITE_TILE => white}
   TURNS = {BLACK_TILE => WHITE_TILE, WHITE_TILE => BLACK_TILE}
+  WINNER_MESSAGE = "Winner! Winner! Chicken dinner!".freeze
+
+  @score = para top: WINDOWHEIGHT - Y_OFFSET, left: WINDOWWIDTH - X_OFFSET*2.5
+  @turn = para top:  WINDOWHEIGHT - Y_OFFSET, left: X_OFFSET
+  @winner = para top: Y_OFFSET / 2, left: WINDOWWIDTH / 3
+
   background red
-  board = Board.new
-  players = [Human.new(board, BLACK_TILE), Human.new(board, WHITE_TILE)]
+  rage_quit
+  board, players = start_setup
+
   draw_board
   draw_tiles board
+
   turn = BLACK_TILE
-
-  @score = para
-  @turn = para
-  @winner = para
-
   score_and_turn players, turn
 
   click do |button, top, left|
     if button == 1
       coords = clicked_square_coordinates left, top
 
-      player_to_make_move = players.select { |player| player.tile == turn }.first
-      other_player = players.select { |player| player_to_make_move != player}.first
-      move = player_to_make_move.make_move coords
+      player_on_turn = players.select { |player| player.tile == turn }.first
+      other_player = players.select { |player| player_on_turn != player }.first
+
+      move = player_on_turn.make_move coords
+
+      #section for computer move
+      # if player_on_turn.is_a? Human
+      #   move = player_on_turn.make_move coords
+      # else
+      #   move = player_on_turn.make_move "hard"
+      # end
+
       if move
         turn = TURNS[turn] unless other_player.valid_moves.empty?
         score_and_turn players, turn
@@ -108,7 +136,7 @@ Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
         draw_tiles board
       end
 
-      @winner.replace "winner winner chicken dinner" if check_for_winner board, players
+      check_for_winner board, players
     end
   end
 end
