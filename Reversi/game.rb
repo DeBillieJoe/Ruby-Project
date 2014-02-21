@@ -1,16 +1,18 @@
 require './reversi.rb'
 require './console_ui.rb'
-include Reversi
+
 
 class Game
+  include Reversi
+
   attr_accessor :board, :player_one, :player_two, :gui
 
   def initialize(width = 8, height = 8)
-    @board = Reversi::Board.new
-    @player_one = Reversi::Human.new @board, Reversi::BLACK_CELL
-    @player_two = Reversi::Computer.new @board, Reversi::WHITE_CELL
+    @board = Board.new
+    @player_one = Human.new @board, BLACK_CELL
+    @player_two = Computer.new @board, WHITE_CELL
     @gui = ConsoleUi.new
-    @turn = Reversi::BLACK_CELL
+    @turn = BLACK_CELL
   end
 
   def run_game
@@ -22,17 +24,33 @@ class Game
       puts gui
       gui.score player_one.score, player_two.score
 
-      player, other_player = player_one.tile == @turn ? [player_one, player_two] : [player_two, player_one]
+      players = [player_one, player_two]
+      player, other_player = player_one.tile == @turn ? players : players.reverse
 
       break if player.valid_moves.empty?
 
       gui.turn player.tile
-      player.is_a?(Reversi::Human) ? player_move(player) : computer_move(player, difficulty)
+      if player.is_a? Reversi::Human
+        player_move player
+      else
+        computer_move player, difficulty
+      end
 
       if not other_player.valid_moves.empty?
         @turn = other_player.tile
       end
     end
+
+    end_game
+    sleep(1)
+  end
+
+  def end_game
+    winner = "Winner! Winner! Chicken dinner!"
+    tie = "It's a tie!"
+
+    puts winner if player_one.score != player_two.score
+    puts tie if player_one.score == player_two.score
   end
 
   def player_move(player)
