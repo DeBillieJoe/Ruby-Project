@@ -42,8 +42,12 @@ module Reversi
       @cells.has_key? [x, y]
     end
 
-    def empty?(x, y)
+    def empty_cell?(x, y)
       @cells[[x, y]] == EMPTY_CELL
+    end
+
+    def full?
+      @cells.all? { |key, value| not empty_cell? *key}
     end
 
     def positions
@@ -59,7 +63,7 @@ module Reversi
     def is_valid_move?(cell)
       tiles_to_flip = []
 
-      if board.is_move_on_board?(*cell) and board.empty? *cell
+      if board.is_move_on_board?(*cell) and board.empty_cell? *cell
         board[*cell] = tile
 
         DIRECTIONS.each do |direction|
@@ -119,8 +123,7 @@ module Reversi
 
     def medium
       possible_moves = valid_moves.shuffle
-      index = possible_moves.map { |position| tiles_to_flip(position).size }.each_with_index.max[1]
-      possible_moves[index]
+      possible_moves[index possible_moves]
     end
 
     def hard
@@ -129,8 +132,11 @@ module Reversi
         possible_moves = bad_moves
       end
 
-      index = possible_moves.map { |position| tiles_to_flip(position).size }.each_with_index.max[1]
-      possible_moves[index]
+      possible_moves[index possible_moves]
+    end
+
+    def index(possible_moves)
+      possible_moves.map { |cell| tiles_to_flip(cell).size }.each_with_index.max[1]
     end
 
     def bad_moves
@@ -182,6 +188,3 @@ module Reversi
                [WIDTH-2, HEIGHT-1], [WIDTH-2, HEIGHT-2], [WIDTH-1, HEIGHT-2]].freeze
   end
 end
-
-# board = Reversi::Board.new
-# players = [Reversi::Human.new(board, 1), Reversi::Human.new(board, 2)]
