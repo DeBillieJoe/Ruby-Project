@@ -74,9 +74,11 @@ def score_and_turn(players, turn)
 end
 
 def check_for_winner?(board, players)
+  winner_message = "Winner! Winner! Chicken dinner!"
+  tie_message = "It's a tie"
   if board.full? or players.all? { |player| player.valid_moves.empty? }
-    @winner.replace "#{WINNER_MESSAGE}"
-
+    @winner.replace "#{winner_message}" if players[0].score != players[1].score
+    @winner.replace = "#{tie_message}" if  players[0].score == players[1].score
   end
 end
 
@@ -97,7 +99,7 @@ end
 Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
   TILECOLORS = {BLACK_TILE => black, WHITE_TILE => white}
   TURNS = {BLACK_TILE => WHITE_TILE, WHITE_TILE => BLACK_TILE}
-  WINNER_MESSAGE = "Winner! Winner! Chicken dinner!".freeze
+
 
   @score = para top: WINDOWHEIGHT - Y_OFFSET, left: WINDOWWIDTH - X_OFFSET*2.5
   @turn = para top:  WINDOWHEIGHT - Y_OFFSET, left: X_OFFSET
@@ -136,7 +138,7 @@ Shoes.app width: WINDOWWIDTH, height: WINDOWHEIGHT, title: "Reversi" do
         draw_tiles board
       end
 
-      check_for_winner board, players
+      check_for_winner? board, players
     end
   end
 end
